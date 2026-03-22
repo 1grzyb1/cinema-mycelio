@@ -1,10 +1,11 @@
 import { asc, eq } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { getDb } from '$lib/server/db';
 import { movie, person, rating } from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
+	const db = getDb();
 	const people = await db
 		.select({
 			id: person.id,
@@ -88,6 +89,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions = {
 	addMovie: async ({ request }) => {
+		const db = getDb();
 		const data = await request.formData();
 		const imdbId = String(data.get('imdbId') ?? '').trim();
 		const title = String(data.get('title') ?? '').trim();
@@ -119,6 +121,7 @@ export const actions = {
 		return { success: true };
 	},
 	rate: async ({ request }) => {
+		const db = getDb();
 		const data = await request.formData();
 		const movieId = String(data.get('movieId') ?? '');
 		const personId = String(data.get('personId') ?? '');
@@ -144,6 +147,7 @@ export const actions = {
 		return { success: true };
 	},
 	deleteMovie: async ({ request }) => {
+		const db = getDb();
 		const data = await request.formData();
 		const movieId = String(data.get('movieId') ?? '').trim();
 		if (!movieId) {

@@ -5,7 +5,7 @@ import {
 	isValidAvatarSeed,
 	sanitizePixelAvatarOptions
 } from '$lib/pixel-avatar';
-import { db } from '$lib/server/db';
+import { getDb } from '$lib/server/db';
 import { person } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
@@ -15,6 +15,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 		return json({ error: 'Brak identyfikatora' }, { status: 400 });
 	}
 
+	const db = getDb();
 	const [existing] = await db.select({ id: person.id }).from(person).where(eq(person.id, id));
 	if (!existing) {
 		return json({ error: 'Nie znaleziono osoby' }, { status: 404 });

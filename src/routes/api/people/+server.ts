@@ -5,7 +5,7 @@ import {
 	isValidAvatarSeed,
 	sanitizePixelAvatarOptions
 } from '$lib/pixel-avatar';
-import { db } from '$lib/server/db';
+import { getDb } from '$lib/server/db';
 import { person } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
@@ -17,6 +17,7 @@ function isUniqueConstraintError(e: unknown): boolean {
 }
 
 export const GET: RequestHandler = async () => {
+	const db = getDb();
 	const people = await db
 		.select({
 			id: person.id,
@@ -79,6 +80,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	try {
+		const db = getDb();
 		const [row] = await db
 			.insert(person)
 			.values({
