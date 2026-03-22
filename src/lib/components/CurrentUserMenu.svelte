@@ -125,7 +125,6 @@
 			</Dialog.Header>
 
 			<div class="space-y-6 px-6 pb-6">
-
 				<section class="space-y-3 border-t border-white/10 pt-5">
 					<h3 class="text-xs font-medium tracking-wide text-neon-text/65 uppercase">
 						Edytuj awatar

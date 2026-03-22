@@ -78,6 +78,7 @@
 				movies={data.movies}
 				ratingsByMovie={data.ratingsByMovie}
 				currentPersonId={currentPerson?.id ?? null}
+				currentPersonProfile={activePerson}
 			/>
 		</div>
 	</section>

@@ -69,7 +69,9 @@ try {
 		.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='movie'")
 		.get();
 	if (!tableExists) {
-		console.log('migrate-movie-tmdb: brak tabeli movie — pomijam (świeża baza; drizzle-kit push utworzy schemat).');
+		console.log(
+			'migrate-movie-tmdb: brak tabeli movie — pomijam (świeża baza; drizzle-kit push utworzy schemat).'
+		);
 		process.exit(0);
 	}
 

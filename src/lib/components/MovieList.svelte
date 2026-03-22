@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { toast } from 'svelte-sonner';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Star from '@lucide/svelte/icons/star';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
@@ -26,11 +27,19 @@
 	let {
 		movies,
 		ratingsByMovie,
-		currentPersonId
+		currentPersonId,
+		currentPersonProfile = null
 	}: {
 		movies: MovieRow[];
 		ratingsByMovie: Record<string, RatingEntry[]>;
 		currentPersonId: string | null;
+		/** Do optymistycznego wpisu przy pierwszej ocenie (gdy nie ma invalidate) */
+		currentPersonProfile?: {
+			id: string;
+			name: string;
+			avatarSeed?: string;
+			avatarOptions?: string;
+		} | null;
 	} = $props();
 
 	const scores = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -40,9 +49,47 @@
 
 	let deleteTarget = $state<{ id: string; title: string } | null>(null);
 
+	/** Po zapisie bez invalidate średnie z serwera są stare — tu trzymamy tylko Twoją ocenę do UI */
+	let optimisticMyScore = $state<Record<string, number>>({});
+
 	function myScore(movieId: string): number | undefined {
 		if (!currentPersonId) return undefined;
 		return ratingsByMovie[movieId]?.find((r) => r.personId === currentPersonId)?.score;
+	}
+
+	function effectiveMyScore(movieId: string): number | undefined {
+		const o = optimisticMyScore[movieId];
+		if (o != null) return o;
+		return myScore(movieId);
+	}
+
+	function ratingEntriesFor(movieId: string): RatingEntry[] {
+		const base = ratingsByMovie[movieId] ?? [];
+		const opt = optimisticMyScore[movieId];
+		if (opt == null || !currentPersonId) return base;
+		const i = base.findIndex((r) => r.personId === currentPersonId);
+		if (i === -1) {
+			if (
+				currentPersonProfile &&
+				currentPersonProfile.id === currentPersonId &&
+				base.every((r) => r.personId !== currentPersonId)
+			) {
+				return [
+					...base,
+					{
+						personId: currentPersonProfile.id,
+						personName: currentPersonProfile.name,
+						personAvatarSeed: currentPersonProfile.avatarSeed ?? '',
+						personAvatarOptions: currentPersonProfile.avatarOptions ?? '{}',
+						score: opt
+					}
+				].sort((a, b) => a.personName.localeCompare(b.personName, 'pl'));
+			}
+			return base;
+		}
+		const copy = [...base];
+		copy[i] = { ...copy[i], score: opt };
+		return copy;
 	}
 </script>
 
@@ -107,11 +154,11 @@
 							<p class="mb-1 text-xs font-medium tracking-wide text-neon-text/65 uppercase">
 								Oceny osób
 							</p>
-							{#if !ratingsByMovie[m.id]?.length}
+							{#if !ratingEntriesFor(m.id).length}
 								<p class="text-sm text-neon-text/60">Jeszcze nikt nie ocenił.</p>
 							{:else}
 								<ul class="space-y-1 text-sm">
-									{#each ratingsByMovie[m.id] as r (r.personId)}
+									{#each ratingEntriesFor(m.id) as r (r.personId)}
 										<li
 											class="flex items-center justify-between gap-4 border-b border-white/5 py-1 last:border-0"
 										>
@@ -137,7 +184,24 @@
 							{#if !currentPersonId}
 								<p class="text-sm text-neon-text/60">Dołącz jako osoba, aby móc oceniać.</p>
 							{:else}
-								<form method="POST" action="?/rate" use:enhance class="inline-block w-full">
+								<form
+									method="POST"
+									action="?/rate"
+									use:enhance={() => {
+										return async ({ result, update, formData }) => {
+											await update({ reset: false, invalidateAll: false });
+											if (result.type === 'success') {
+												const movieId = String(formData.get('movieId') ?? '');
+												const score = Number(formData.get('score'));
+												if (movieId && Number.isInteger(score)) {
+													optimisticMyScore = { ...optimisticMyScore, [movieId]: score };
+												}
+												toast.success('Wynik zapisano pomyślnie');
+											}
+										};
+									}}
+									class="inline-block w-full"
+								>
 									<input type="hidden" name="movieId" value={m.id} />
 									<input type="hidden" name="personId" value={currentPersonId} />
 									<div class="flex flex-wrap gap-1">
@@ -151,16 +215,16 @@
 												class="inline-flex size-6 items-center justify-center rounded-md border border-neon-violet/30 bg-transparent transition-colors duration-150 ease-out hover:border-neon-cyan/50 hover:bg-neon-violet/20 focus:ring-2 focus:ring-neon-cyan/40 focus:outline-none"
 											>
 												<Star
-													class="size-4 {n <= (myScore(m.id) ?? 0)
+													class="size-4 {n <= (effectiveMyScore(m.id) ?? 0)
 														? 'fill-amber-400 text-amber-300'
 														: 'text-neon-text-dim'}"
 												/>
 											</button>
 										{/each}
 									</div>
-									{#if myScore(m.id)}
+									{#if effectiveMyScore(m.id)}
 										<p class="mt-2 text-xs text-neon-text/60">
-											Zapisano: {myScore(m.id)}/10 — wybierz gwiazdkę, aby zmienić.
+											Zapisano: {effectiveMyScore(m.id)}/10 — wybierz gwiazdkę, aby zmienić.
 										</p>
 									{/if}
 								</form>
