@@ -1,0 +1,131 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* Single source of truth — matches dark neon mesh */
+:root {
+	--neon-base: #050510;
+	--neon-cyan: #0ea5b4;
+	--neon-cyan-deep: rgb(10 70 95);
+	--neon-violet: #a855f7;
+	--neon-violet-deep: rgb(88 28 120);
+	--neon-mesh-cyan-start: rgb(14 165 180 / 0.5);
+	--neon-mesh-cyan-mid: rgb(10 70 95 / 0.22);
+	--neon-mesh-violet-start: rgb(168 85 247 / 0.45);
+	--neon-mesh-violet-mid: rgb(88 28 120 / 0.2);
+	--neon-text: #e8f4f7;
+	--neon-text-dim: #3d4458;
+	--neon-title-core: #f0fafc;
+	--neon-title-glow-cyan: #2dd4bf;
+	--neon-title-glow-violet: #c084fc;
+	--neon-shadow-deep: rgb(0 0 0 / 0.85);
+	--radius: 0.625rem;
+}
+
+@theme {
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-neon-base: var(--neon-base);
+	--color-neon-cyan: var(--neon-cyan);
+	--color-neon-violet: var(--neon-violet);
+	--color-neon-text: var(--neon-text);
+	--color-neon-text-dim: var(--neon-text-dim);
+	--color-neon-title-glow-cyan: var(--neon-title-glow-cyan);
+	--color-neon-title-glow-violet: var(--neon-title-glow-violet);
+	/* shadcn-svelte (nova) — aligned with dark neon */
+	--color-background: var(--neon-base);
+	--color-foreground: var(--neon-text);
+	--color-card: oklch(0.17 0.03 280);
+	--color-card-foreground: var(--neon-text);
+	--color-popover: oklch(0.18 0.03 280);
+	--color-popover-foreground: var(--neon-text);
+	--color-primary: var(--neon-violet);
+	--color-primary-foreground: var(--neon-text);
+	--color-secondary: oklch(0.24 0.04 280);
+	--color-secondary-foreground: var(--neon-text);
+	--color-muted: oklch(0.22 0.03 280);
+	--color-muted-foreground: oklch(0.7 0.04 280);
+	--color-accent: oklch(0.26 0.05 280);
+	--color-accent-foreground: var(--neon-text);
+	--color-destructive: oklch(0.62 0.2 25);
+	--color-border: oklch(1 0 0 / 12%);
+	--color-input: oklch(1 0 0 / 14%);
+	--color-ring: var(--neon-cyan);
+}
+
+html {
+	background: var(--neon-base);
+	color-scheme: dark;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: transparent;
+}
+
+/* Dark neon mesh: soft radial blobs + blur + slow drift */
+.neon-mesh {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+	pointer-events: none;
+	background: var(--neon-base);
+}
+
+.neon-mesh::before,
+.neon-mesh::after {
+	content: '';
+	position: absolute;
+	width: 140%;
+	height: 140%;
+	border-radius: 50%;
+	filter: blur(88px);
+	animation: neon-mesh-drift 20s ease-in-out infinite alternate;
+}
+
+.neon-mesh::before {
+	left: -22%;
+	top: -32%;
+	opacity: 0.44;
+	background: radial-gradient(
+		circle at 42% 42%,
+		var(--neon-mesh-cyan-start) 0%,
+		var(--neon-mesh-cyan-mid) 42%,
+		transparent 65%
+	);
+}
+
+.neon-mesh::after {
+	right: -28%;
+	bottom: -38%;
+	opacity: 0.4;
+	background: radial-gradient(
+		circle at 58% 58%,
+		var(--neon-mesh-violet-start) 0%,
+		var(--neon-mesh-violet-mid) 44%,
+		transparent 66%
+	);
+	animation-duration: 24s;
+	animation-delay: -5s;
+}
+
+@keyframes neon-mesh-drift {
+	from {
+		transform: translate(0, 0) scale(1);
+	}
+	to {
+		transform: translate(3%, -4%) scale(1.07);
+	}
+}
+
+.layout-shell {
+	position: relative;
+	z-index: 1;
+	min-height: 100vh;
+	color: var(--neon-text);
+}

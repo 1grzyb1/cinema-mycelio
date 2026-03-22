@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cinema Mycelio">
+	<title>Neon mushroom</title>
+	<defs>
+		<linearGradient id="m-cap" x1="0%" y1="0%" x2="100%" y2="100%">
+			<stop offset="0%" stop-color="#c084fc" />
+			<stop offset="55%" stop-color="#a855f7" />
+			<stop offset="100%" stop-color="#6d28d9" />
+		</linearGradient>
+		<linearGradient id="m-stem" x1="0%" y1="0%" x2="0%" y2="100%">
+			<stop offset="0%" stop-color="#5eead4" />
+			<stop offset="100%" stop-color="#0d9488" />
+		</linearGradient>
+		<filter id="m-neon" x="-35%" y="-35%" width="170%" height="170%">
+			<feGaussianBlur stdDeviation="1.8" result="b" />
+			<feMerge>
+				<feMergeNode in="b" />
+				<feMergeNode in="SourceGraphic" />
+			</feMerge>
+		</filter>
+		<filter id="m-soft" x="-50%" y="-50%" width="200%" height="200%">
+			<feGaussianBlur stdDeviation="3" result="g" />
+			<feMerge>
+				<feMergeNode in="g" />
+			</feMerge>
+		</filter>
+	</defs>
+	<!-- Dark tile so the icon reads on light browser chrome -->
+	<rect width="128" height="128" rx="28" fill="#050510" />
+	<!-- Ambient glow under cap -->
+	<ellipse cx="64" cy="58" rx="48" ry="36" fill="#a855f7" opacity="0.22" filter="url(#m-soft)" />
+	<!-- Stem -->
+	<path
+		d="M54 66 L50 114 Q49 120 56 120 L72 120 Q79 120 78 114 L74 66 Q64 62 54 66 Z"
+		fill="url(#m-stem)"
+		stroke="#2dd4bf"
+		stroke-width="2"
+		filter="url(#m-neon)"
+	/>
+	<!-- Cap -->
+	<path
+		d="M64 18 C32 18 14 40 14 58 C14 64 22 68 64 68 C106 68 114 64 114 58 C114 40 96 18 64 18 Z"
+		fill="url(#m-cap)"
+		stroke="#e9d5ff"
+		stroke-width="2"
+		filter="url(#m-neon)"
+	/>
+	<!-- Gills hint -->
+	<path
+		d="M28 58 Q64 52 100 58"
+		fill="none"
+		stroke="#581c78"
+		stroke-width="2"
+		stroke-linecap="round"
+		opacity="0.55"
+	/>
+	<!-- Spots (neon highlights) -->
+	<circle cx="40" cy="42" r="5" fill="#f0abfc" opacity="0.85" />
+	<circle cx="72" cy="36" r="4" fill="#e9d5ff" opacity="0.75" />
+	<circle cx="88" cy="48" r="3.5" fill="#c084fc" opacity="0.9" />
+	<circle cx="52" cy="34" r="3" fill="#fdf4ff" opacity="0.65" />
+</svg>
