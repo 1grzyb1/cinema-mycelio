@@ -38,21 +38,15 @@
 
 	let fields = $state<PixelEditorFields>(hydrateEditorFromOptionsJson(resolveHydrationJson()));
 
-	let avatarSeed = $state(
-		initialSeed != null && isValidAvatarSeed(String(initialSeed))
-			? String(initialSeed)
-			: crypto.randomUUID()
-	);
+	let avatarSeed = $state<string>(crypto.randomUUID());
 
-	const previewOptionsJson = $derived(JSON.stringify(buildPixelAvatarOptions(fields)));
-
-	$effect(() => {
-		const json = resolveHydrationJson();
-		fields = hydrateEditorFromOptionsJson(json);
+	$effect.pre(() => {
 		if (initialSeed != null && isValidAvatarSeed(String(initialSeed))) {
-			avatarSeed = String(initialSeed);
+			avatarSeed = String(initialSeed) as string;
 		}
 	});
+
+	const previewOptionsJson = $derived(JSON.stringify(buildPixelAvatarOptions(fields)));
 
 	function randomizeAll() {
 		avatarSeed = crypto.randomUUID();
@@ -66,10 +60,13 @@
 		};
 	}
 
-	export function getPayload(): { avatarSeed: string; avatarOptions: string } {
+	export function getPayload(): {
+		avatarSeed: string;
+		avatarOptions: ReturnType<typeof buildPixelAvatarOptions>;
+	} {
 		return {
 			avatarSeed,
-			avatarOptions: JSON.stringify(buildPixelAvatarOptions(fields))
+			avatarOptions: buildPixelAvatarOptions(fields)
 		};
 	}
 
@@ -137,7 +134,8 @@
 			value={fields.mouth}
 			ariaPrev="Poprzedni wariant ust"
 			ariaNext="Następny wariant ust"
-			onPrev={() => (fields = { ...fields, mouth: cyclePixelChoice(PIXEL_MOUTH, fields.mouth, -1) })}
+			onPrev={() =>
+				(fields = { ...fields, mouth: cyclePixelChoice(PIXEL_MOUTH, fields.mouth, -1) })}
 			onNext={() => (fields = { ...fields, mouth: cyclePixelChoice(PIXEL_MOUTH, fields.mouth, 1) })}
 		/>
 		<PixelAvatarCycleRow

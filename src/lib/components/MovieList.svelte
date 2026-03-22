@@ -148,7 +148,7 @@
 												value={String(n)}
 												title={`Ocena ${n} / 10`}
 												aria-label={`Oceń na ${n} z 10`}
-												class="inline-flex size-9 items-center justify-center rounded-md border border-neon-violet/30 bg-transparent transition-colors duration-150 ease-out hover:border-neon-cyan/50 hover:bg-neon-violet/20 focus:ring-2 focus:ring-neon-cyan/40 focus:outline-none"
+												class="inline-flex size-6 items-center justify-center rounded-md border border-neon-violet/30 bg-transparent transition-colors duration-150 ease-out hover:border-neon-cyan/50 hover:bg-neon-violet/20 focus:ring-2 focus:ring-neon-cyan/40 focus:outline-none"
 											>
 												<Star
 													class="size-4 {n <= (myScore(m.id) ?? 0)

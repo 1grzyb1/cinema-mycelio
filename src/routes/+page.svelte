@@ -3,6 +3,7 @@
 	import type { PageProps } from './$types';
 	import Title from './Title.svelte';
 	import JoinAsModal from '$lib/components/JoinAsModal.svelte';
+	import CurrentUserMenu from '$lib/components/CurrentUserMenu.svelte';
 	import AddMovieDialog from '$lib/components/AddMovieDialog.svelte';
 	import MovieList from '$lib/components/MovieList.svelte';
 	import { getCurrentPerson, type CurrentPerson } from '$lib/person-storage';
@@ -15,6 +16,22 @@
 	onMount(() => {
 		currentPerson = getCurrentPerson();
 		showJoinModal = currentPerson === null;
+	});
+
+	/** Merge localStorage person with server row so avatar fields stay fresh after invalidate */
+	const activePerson = $derived.by((): CurrentPerson | null => {
+		const cp = currentPerson;
+		if (!cp) return null;
+		const row = data.people.find((p) => p.id === cp.id);
+		if (row) {
+			return {
+				id: row.id,
+				name: row.name,
+				avatarSeed: row.avatarSeed,
+				avatarOptions: row.avatarOptions
+			};
+		}
+		return cp;
 	});
 </script>
 
@@ -29,11 +46,25 @@
 		/>
 	{/if}
 
-	<section class="mx-auto flex w-full max-w-2xl flex-col items-center space-y-15">
-		<header class="relative min-h-[4.5rem] w-full">
-			<div class="pointer-events-none absolute inset-x-0 top-0 flex justify-center px-2">
-				<div class="pointer-events-auto w-full max-w-3xl">
-					<Title />
+	<section class="mx-auto flex w-full max-w-2xl flex-col items-center gap-8 md:gap-10">
+		<header class="flex w-full flex-col gap-4 md:gap-5">
+			<div class="w-full min-w-0">
+				<Title />
+			</div>
+			<div class="flex w-full items-start justify-between gap-3">
+				<div class="min-w-0">
+					{#if activePerson}
+						<CurrentUserMenu
+							person={activePerson}
+							people={data.people}
+							onUpdate={() => {
+								currentPerson = getCurrentPerson();
+							}}
+						/>
+					{/if}
+				</div>
+				<div class="shrink-0">
+					<AddMovieDialog />
 				</div>
 			</div>
 		</header>
@@ -42,8 +73,7 @@
 			<p role="alert" class="w-full text-center text-sm text-destructive">{String(form.message)}</p>
 		{/if}
 
-		<div class="w-full gap-4 flex flex-col items-end">
-			<AddMovieDialog />
+		<div class="w-full">
 			<MovieList
 				movies={data.movies}
 				ratingsByMovie={data.ratingsByMovie}

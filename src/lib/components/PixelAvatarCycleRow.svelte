@@ -25,8 +25,7 @@
 </script>
 
 <div class="flex items-center gap-1.5">
-	<span
-		class="w-16 shrink-0 text-[10px] font-medium tracking-wide text-neon-text/70 uppercase"
+	<span class="w-16 shrink-0 text-[10px] font-medium tracking-wide text-neon-text/70 uppercase"
 		>{label}</span
 	>
 	<button
