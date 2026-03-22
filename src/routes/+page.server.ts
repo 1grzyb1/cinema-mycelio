@@ -91,25 +91,25 @@ export const actions = {
 	addMovie: async ({ request }) => {
 		const db = getDb();
 		const data = await request.formData();
-		const imdbId = String(data.get('imdbId') ?? '').trim();
+		const tmdbId = String(data.get('tmdbId') ?? '').trim();
 		const title = String(data.get('title') ?? '').trim();
 		const posterUrlRaw = String(data.get('posterUrl') ?? '').trim();
 		const posterUrl = posterUrlRaw && posterUrlRaw !== 'N/A' ? posterUrlRaw : null;
 
-		if (!imdbId || !title) {
+		if (!tmdbId || !title) {
 			return fail(400, { message: 'Wybierz film z listy wyszukiwania' });
 		}
 		if (title.length > 240) {
 			return fail(400, { message: 'Tytuł jest za długi' });
 		}
-		if (!/^tt\d+$/i.test(imdbId)) {
-			return fail(400, { message: 'Nieprawidłowy identyfikator IMDb' });
+		if (!/^\d+$/.test(tmdbId)) {
+			return fail(400, { message: 'Nieprawidłowy identyfikator TMDB' });
 		}
 
 		try {
 			await db.insert(movie).values({
 				title,
-				imdbId,
+				tmdbId,
 				posterUrl
 			});
 		} catch (e) {

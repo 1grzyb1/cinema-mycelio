@@ -2,13 +2,13 @@
 	import { enhance } from '$app/forms';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { buttonVariants } from '$lib/components/ui/button/index.js';
-	import type { OmdbSearchItem } from '$lib/omdb-types';
+	import type { TmdbMovieListItem } from '$lib/tmdb-types';
 
 	let open = $state(false);
 	let searchQuery = $state('');
 	let debouncedQuery = $state('');
-	let results = $state<OmdbSearchItem[]>([]);
-	let omdbError = $state<string | null>(null);
+	let results = $state<TmdbMovieListItem[]>([]);
+	let searchError = $state<string | null>(null);
 	let loading = $state(false);
 
 	const DEBOUNCE_MS = 380;
@@ -25,26 +25,28 @@
 		const q = debouncedQuery.trim();
 		if (q.length < 2) {
 			results = [];
-			omdbError = null;
+			searchError = null;
 			loading = false;
 			return;
 		}
 
 		let cancelled = false;
 		loading = true;
-		omdbError = null;
+		searchError = null;
 
 		fetch(`/api/movies/search?q=${encodeURIComponent(q)}`)
-			.then((r) => r.json() as Promise<{ results: OmdbSearchItem[]; omdbError: string | null }>)
+			.then(
+				(r) => r.json() as Promise<{ results: TmdbMovieListItem[]; searchError: string | null }>
+			)
 			.then((data) => {
 				if (cancelled) return;
 				results = data.results ?? [];
-				omdbError = data.omdbError ?? null;
+				searchError = data.searchError ?? null;
 			})
 			.catch(() => {
 				if (cancelled) return;
 				results = [];
-				omdbError = 'Błąd wczytywania wyników';
+				searchError = 'Błąd wczytywania wyników';
 			})
 			.finally(() => {
 				if (!cancelled) loading = false;
@@ -68,9 +70,9 @@
 		</Dialog.Header>
 
 		<div class="px-4 py-3">
-			<label class="sr-only text-neon-text/75" for="omdb-search">Szukaj</label>
+			<label class="sr-only text-neon-text/75" for="movie-search">Szukaj</label>
 			<input
-				id="omdb-search"
+				id="movie-search"
 				type="search"
 				bind:value={searchQuery}
 				autocomplete="off"
@@ -80,14 +82,14 @@
 			{#if loading}
 				<p class="mt-2 text-xs text-neon-text/60">Szukanie…</p>
 			{/if}
-			{#if omdbError}
-				<p role="status" class="mt-2 text-xs text-destructive">{omdbError}</p>
+			{#if searchError}
+				<p role="status" class="mt-2 text-xs text-destructive">{searchError}</p>
 			{/if}
 		</div>
 
 		<div class="max-h-[min(50vh,320px)] overflow-y-auto px-2 pb-2">
 			<ul class="space-y-1.5 pb-2">
-				{#each results as item (item.imdbID)}
+				{#each results as item (item.tmdbId)}
 					<li>
 						<form
 							method="POST"
@@ -99,26 +101,26 @@
 										open = false;
 										searchQuery = '';
 										results = [];
-										omdbError = null;
+										searchError = null;
 									}
 								};
 							}}
 							class="block"
 						>
-							<input type="hidden" name="imdbId" value={item.imdbID} />
-							<input type="hidden" name="title" value={`${item.Title} (${item.Year})`} />
+							<input type="hidden" name="tmdbId" value={item.tmdbId} />
 							<input
 								type="hidden"
-								name="posterUrl"
-								value={item.Poster === 'N/A' ? '' : item.Poster}
+								name="title"
+								value={item.year ? `${item.title} (${item.year})` : item.title}
 							/>
+							<input type="hidden" name="posterUrl" value={item.posterUrl ?? ''} />
 							<button
 								type="submit"
 								class="flex w-full items-center gap-3 rounded-lg border border-neon-violet/25 border-transparent p-2 text-left transition-colors duration-150 hover:border-neon-violet/45 hover:bg-neon-violet/15"
 							>
-								{#if item.Poster && item.Poster !== 'N/A'}
+								{#if item.posterUrl}
 									<img
-										src={item.Poster}
+										src={item.posterUrl}
 										alt=""
 										class="size-14 shrink-0 rounded bg-neon-violet/10 object-cover"
 										loading="lazy"
@@ -132,16 +134,18 @@
 									</div>
 								{/if}
 								<span class="min-w-0 flex-1">
-									<span class="block truncate text-sm font-medium text-neon-text">{item.Title}</span
+									<span class="block truncate text-sm font-medium text-neon-text">{item.title}</span
 									>
-									<span class="text-xs text-neon-text/65">{item.Year}</span>
+									{#if item.year}
+										<span class="text-xs text-neon-text/65">{item.year}</span>
+									{/if}
 								</span>
 							</button>
 						</form>
 					</li>
 				{/each}
 			</ul>
-			{#if debouncedQuery.length >= 2 && !loading && !omdbError && results.length === 0}
+			{#if debouncedQuery.length >= 2 && !loading && !searchError && results.length === 0}
 				<p class="px-4 pb-4 text-center text-sm text-neon-text/60">Brak wyników.</p>
 			{/if}
 		</div>

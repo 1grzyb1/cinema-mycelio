@@ -1,55 +1,71 @@
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import type { OmdbSearchItem } from '$lib/omdb-types';
+import type { TmdbMovieListItem, TmdbSearchMovieRaw } from '$lib/tmdb-types';
 import type { RequestHandler } from './$types';
+
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w185';
+
+function yearFromReleaseDate(s: string | undefined): string {
+	if (!s || s.length < 4) return '';
+	return s.slice(0, 4);
+}
+
+function mapResult(m: TmdbSearchMovieRaw): TmdbMovieListItem {
+	const posterUrl =
+		m.poster_path && m.poster_path.length > 0 ? `${TMDB_IMAGE_BASE}${m.poster_path}` : null;
+	return {
+		tmdbId: String(m.id),
+		title: m.title,
+		year: yearFromReleaseDate(m.release_date),
+		posterUrl
+	};
+}
 
 export const GET: RequestHandler = async ({ url }) => {
 	const q = url.searchParams.get('q')?.trim() ?? '';
 	if (q.length < 2) {
-		return json({ results: [] as OmdbSearchItem[], omdbError: null as string | null });
+		return json({ results: [] as TmdbMovieListItem[], searchError: null as string | null });
 	}
 
-	const key = env.OMDB_API_KEY;
+	const key = env.TMDB_API_KEY;
 	if (!key) {
 		return json({
-			results: [] as OmdbSearchItem[],
-			omdbError: 'Brak OMDB_API_KEY w konfiguracji serwera'
+			results: [] as TmdbMovieListItem[],
+			searchError: 'Brak TMDB_API_KEY w konfiguracji serwera'
 		});
 	}
 
-	const u = new URL('https://www.omdbapi.com/');
-	u.searchParams.set('apikey', key);
-	u.searchParams.set('s', q);
-	u.searchParams.set('type', 'movie');
+	const u = new URL('https://api.themoviedb.org/3/search/movie');
+	u.searchParams.set('query', q);
+	u.searchParams.set('language', 'pl-PL');
+	u.searchParams.set('api_key', key);
 
-	let data: {
-		Response: string;
-		Search?: OmdbSearchItem[];
-		Error?: string;
-	};
+	let data: { results?: TmdbSearchMovieRaw[] };
 	try {
 		const res = await fetch(u);
-		console.log(JSON.stringify(res));
+		if (res.status === 401) {
+			return json({
+				results: [] as TmdbMovieListItem[],
+				searchError: 'Nieprawidłowy klucz TMDB (401)'
+			});
+		}
 		if (!res.ok) {
 			return json({
-				results: [] as OmdbSearchItem[],
-				omdbError: 'Nie udało się połączyć z OMDb'
+				results: [] as TmdbMovieListItem[],
+				searchError: 'Nie udało się połączyć z The Movie Database'
 			});
 		}
 		data = (await res.json()) as typeof data;
 	} catch {
 		return json({
-			results: [] as OmdbSearchItem[],
-			omdbError: 'Błąd sieci przy zapytaniu do OMDb'
+			results: [] as TmdbMovieListItem[],
+			searchError: 'Błąd sieci przy zapytaniu do TMDB'
 		});
 	}
 
-	if (data.Response === 'False') {
-		return json({
-			results: [] as OmdbSearchItem[],
-			omdbError: data.Error ?? 'Brak wyników'
-		});
-	}
-
-	return json({ results: data.Search ?? [], omdbError: null });
+	const raw = data.results ?? [];
+	return json({
+		results: raw.map(mapResult),
+		searchError: null
+	});
 };

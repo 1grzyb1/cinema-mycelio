@@ -2,7 +2,7 @@ name: Build and deploy
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ['main', 'master']
 
 concurrency:
   group: deploy-production
@@ -12,7 +12,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+      TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
@@ -25,7 +25,7 @@ jobs:
           host: 37.27.71.201
           username: ${{ secrets.DEPLOY_USERNAME }}
           key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
-          envs: OMDB_API_KEY,DATABASE_URL
+          envs: TMDB_API_KEY,DATABASE_URL
           script_stop: true
           script: |
             set -euo pipefail
@@ -41,7 +41,7 @@ jobs:
               -p 3010:4173 \
               -v cinema-mycelio-data:/data \
               -e "DATABASE_URL=${DB_URL}" \
-              -e "OMDB_API_KEY=${OMDB_API_KEY}" \
+              -e "TMDB_API_KEY=${TMDB_API_KEY}" \
               -e BODY_SIZE_LIMIT=10485760 \
               cinema-mycelio_ui:latest
             docker image prune --filter "dangling=true" -f

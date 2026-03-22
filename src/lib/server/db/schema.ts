@@ -25,8 +25,8 @@ export const movie = sqliteTable('movie', {
 		.$defaultFn(() => crypto.randomUUID()),
 	title: text('title').notNull(),
 	posterUrl: text('poster_url'),
-	/** OMDb IMDb ID, np. tt1234567 — unikalny gdy ustawiony */
-	imdbId: text('imdb_id').unique()
+	/** The Movie Database movie id (np. "335") — unikalny gdy ustawiony */
+	tmdbId: text('tmdb_id').unique()
 });
 
 export const rating = sqliteTable(
