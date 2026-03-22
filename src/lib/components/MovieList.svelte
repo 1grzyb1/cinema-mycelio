@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import Star from '@lucide/svelte/icons/star';
+	import MushroomIcon from '$lib/components/MushroomIcon.svelte';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -52,6 +52,9 @@
 	/** Po zapisie bez invalidate średnie z serwera są stare — tu trzymamy tylko Twoją ocenę do UI */
 	let optimisticMyScore = $state<Record<string, number>>({});
 
+	/** Którą ocenę (1–10) podglądasz przy najechaniu na grzyb */
+	let hoverRatingPreview = $state<Record<string, number | undefined>>({});
+
 	function myScore(movieId: string): number | undefined {
 		if (!currentPersonId) return undefined;
 		return ratingsByMovie[movieId]?.find((r) => r.personId === currentPersonId)?.score;
@@ -90,6 +93,16 @@
 		const copy = [...base];
 		copy[i] = { ...copy[i], score: opt };
 		return copy;
+	}
+
+	function ratingFillLevel(movieId: string): number {
+		const h = hoverRatingPreview[movieId];
+		if (h != null) return h;
+		return effectiveMyScore(movieId) ?? 0;
+	}
+
+	function ratingPreviewActive(movieId: string): boolean {
+		return hoverRatingPreview[movieId] != null;
 	}
 </script>
 
@@ -133,10 +146,10 @@
 							{/if}
 							<span class="truncate font-medium">{m.title}</span>
 						</span>
-						<span class="shrink-0 text-sm text-neon-text/80 tabular-nums">
+						<span class="flex shrink-0 items-center gap-1 text-sm text-neon-text/80 tabular-nums">
 							{m.avgScore > 0 ? m.avgScore.toFixed(1) : '—'}
-							<span class="text-amber-400/90">★</span>
-							<span class="ml-1 text-neon-text-dim/90">({m.ratingCount})</span>
+							<MushroomIcon class="size-3.5 shrink-0 text-amber-400/90" />
+							<span class="ml-0.5 text-neon-text-dim/90">({m.ratingCount})</span>
 						</span>
 					</span>
 					<ChevronDown
@@ -170,7 +183,12 @@
 												/>
 												<span class="truncate">{r.personName}</span>
 											</span>
-											<span class="shrink-0 text-amber-400/95 tabular-nums">{r.score}/10 ★</span>
+											<span
+												class="inline-flex shrink-0 items-center gap-1 text-amber-400/95 tabular-nums"
+											>
+												{r.score}/10
+												<MushroomIcon class="size-3.5 shrink-0" />
+											</span>
 										</li>
 									{/each}
 								</ul>
@@ -204,27 +222,51 @@
 								>
 									<input type="hidden" name="movieId" value={m.id} />
 									<input type="hidden" name="personId" value={currentPersonId} />
-									<div class="flex flex-wrap gap-1">
-										{#each scores as n (n)}
-											<button
-												type="submit"
-												name="score"
-												value={String(n)}
-												title={`Ocena ${n} / 10`}
-												aria-label={`Oceń na ${n} z 10`}
-												class="inline-flex size-6 items-center justify-center rounded-md border border-neon-violet/30 bg-transparent transition-colors duration-150 ease-out hover:border-neon-cyan/50 hover:bg-neon-violet/20 focus:ring-2 focus:ring-neon-cyan/40 focus:outline-none"
+									<div class="flex flex-wrap items-center gap-3">
+										<div
+											class="flex flex-wrap gap-1"
+											role="group"
+											aria-label="Wybierz ocenę od 1 do 10"
+											onmouseleave={() => {
+												const next = { ...hoverRatingPreview };
+												delete next[m.id];
+												hoverRatingPreview = next;
+											}}
+										>
+											{#each scores as n (n)}
+												<button
+													type="submit"
+													name="score"
+													value={String(n)}
+													title={`${n}/10`}
+													aria-label={`Oceń na ${n} z 10`}
+													onmouseenter={() => {
+														hoverRatingPreview = { ...hoverRatingPreview, [m.id]: n };
+													}}
+													class="inline-flex size-6 items-center justify-center rounded-md border border-neon-violet/30 bg-transparent transition-colors duration-150 ease-out hover:border-neon-cyan/50 hover:bg-neon-violet/20 focus:ring-2 focus:ring-neon-cyan/40 focus:outline-none"
+												>
+													<MushroomIcon
+														class="size-4 {n <= ratingFillLevel(m.id)
+															? ratingPreviewActive(m.id)
+																? 'text-neon-cyan'
+																: 'text-amber-400'
+															: 'text-neon-text-dim/55'}"
+													/>
+												</button>
+											{/each}
+										</div>
+										{#if hoverRatingPreview[m.id] != null}
+											<span
+												class="min-w-[2.75rem] text-sm font-medium text-neon-cyan/95 tabular-nums"
+												aria-live="polite"
 											>
-												<Star
-													class="size-4 {n <= (effectiveMyScore(m.id) ?? 0)
-														? 'fill-amber-400 text-amber-300'
-														: 'text-neon-text-dim'}"
-												/>
-											</button>
-										{/each}
+												{hoverRatingPreview[m.id]}/10
+											</span>
+										{/if}
 									</div>
 									{#if effectiveMyScore(m.id)}
 										<p class="mt-2 text-xs text-neon-text/60">
-											Zapisano: {effectiveMyScore(m.id)}/10 — wybierz gwiazdkę, aby zmienić.
+											Zapisano: {effectiveMyScore(m.id)}/10
 										</p>
 									{/if}
 								</form>
